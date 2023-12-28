@@ -15,7 +15,7 @@ bool compare_edges(const edge& e1, const edge& e2) {
     return e1.source < e2.source || (e1.source == e2.source && e1.destination < e2.destination);
 }
 
-void mtx_to_pbbs(const std::string& input_filename, const std::string& output_filename) {
+void mtx_to_pbbs_adjacency_graph(const std::string& input_filename, const std::string& output_filename) {
 
     std::ifstream input_file(input_filename);
     if (!input_file.is_open()) {
@@ -84,17 +84,125 @@ void mtx_to_pbbs(const std::string& input_filename, const std::string& output_fi
     output_file.close();
 }
 
+void mtx_to_pbbs_edge_graph(const std::string& input_filename, const std::string& output_filename) {
+
+    std::ifstream input_file(input_filename);
+    if (!input_file.is_open()) {
+        std::cerr << "Error opening input file: " << input_filename << std::endl;
+        return;
+    }
+
+    std::ofstream output_file(output_filename);
+    if (!output_file.is_open()) {
+        std::cerr << "Error opening output file: " << output_filename << std::endl;
+        input_file.close();
+        return;
+    }
+
+    std::string line;
+    int max_id, n, m;
+
+    // skip comments
+    while (getline(input_file, line) && line[0] == '%');
+
+    // read header
+    sscanf(line.c_str(), "%d %d %d", &max_id, &n, &m);
+
+    output_file << "EdgeGraph" << std::endl;
+    output_file << n << std::endl;
+    output_file << m << std::endl;
+
+    for (int i = 0; i < m; i++) {
+        
+        edge e;
+        input_file >> e.source >> e.destination;
+
+#ifdef ZERO_BASED_INDEXING
+        output_file << e.source << " " << e.destination - 1 << std::endl;
+#else
+        // TODO: just append the rest of the file instead ?
+        output_file << e.source << " " << e.destination << std::endl;
+#endif
+    }
+
+    input_file.close();
+    output_file.close();
+}
+
+void mtx_to_pbbs_weighted_edge_graph(const std::string& input_filename, const std::string& output_filename) {
+
+    std::ifstream input_file(input_filename);
+    if (!input_file.is_open()) {
+        std::cerr << "Error opening input file: " << input_filename << std::endl;
+        return;
+    }
+
+    std::ofstream output_file(output_filename);
+    if (!output_file.is_open()) {
+        std::cerr << "Error opening output file: " << output_filename << std::endl;
+        input_file.close();
+        return;
+    }
+
+    std::string line;
+    int max_id, n, m;
+
+    // skip comments
+    while (getline(input_file, line) && line[0] == '%');
+
+    // read header
+    sscanf(line.c_str(), "%d %d %d", &max_id, &n, &m);
+
+    output_file << "WeightedEdgeArray" << std::endl;
+    output_file << n << std::endl;
+    output_file << m << std::endl;
+
+    for (int i = 0; i < m; i++) {
+        
+        edge e;
+        input_file >> e.source >> e.destination;
+
+#ifdef ZERO_BASED_INDEXING
+        output_file << e.source << " " << e.destination - 1 << " 1.0" << std::endl;
+#else
+        // TODO: just append the rest of the file instead ?
+        output_file << e.source << " " << e.destination << " 1.0" << std::endl;
+#endif
+    }
+
+    input_file.close();
+    output_file.close();
+}
+
 int main(int argc, char* argv[]) {
     
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <input_filename> <output_filename>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "   Usage: " << argv[0] << " <type> <input_filename> <output_filename>" << std::endl;
+        std::cerr << "  <type>: Specify graph type. Options are:" << std::endl;
+        std::cerr << "      -a: Adjacency graph" << std::endl;
+        std::cerr << "      -e: Edge graph" << std::endl;
+        std::cerr << "      -w: Weighted edge graph" << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::string input_filename = argv[1];
-    std::string output_filename = argv[2];
 
-    mtx_to_pbbs(input_filename, output_filename);
+    std::string type = argv[1];
+    std::string input_filename = argv[2];
+    std::string output_filename = argv[3];
+
+    if (type == "-a") {
+        mtx_to_pbbs_adjacency_graph(input_filename, output_filename);
+    } 
+    else if (type == "-e") {
+        mtx_to_pbbs_edge_graph(input_filename, output_filename);
+    } 
+    else if (type == "-w") {
+        mtx_to_pbbs_weighted_edge_graph(input_filename, output_filename);
+    } 
+    else {
+        std::cerr << "Invalid graph type specified." << std::endl;
+        return EXIT_FAILURE;
+    }
 
     std::cout << "Conversion completed successfully." << std::endl;
 
