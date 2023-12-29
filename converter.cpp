@@ -84,20 +84,17 @@ void mtx_to_pbbs_adjacency_graph(const std::string& input_filename, const std::s
     for (int i = 0; i < output_m; i++) {
         
 #ifdef ZERO_BASED_INDEXING
-        if(weighted) {
-            output_file << edges[i].destination - 1 << " 1.0" << std::endl;
-        }
-        else {
-            output_file << edges[i].destination - 1 << std::endl;
-        }
+        output_file << edges[i].destination - 1 << std::endl;
 #else
-        if(weighted) {
-            output_file << edges[i].destination << " 1.0" << std::endl;
-        }
-        else {
-            output_file << edges[i].destination << std::endl;
-        }
+        output_file << edges[i].destination << std::endl;
 #endif
+    }
+
+    if(weighted) {
+
+        for(int i = 0; i < output_m; i++) {
+            output_file << 1.0 << std::endl;
+        }
     }
 
     input_file.close();
